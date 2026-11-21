@@ -25,4 +25,4 @@ Open `http://127.0.0.1:5173`.
 The data comes from the [O*NET](https://www.onetcenter.org/) Software Skills file. The raw file is kept in Google Drive because of its size. Only `occupation_skill_profiles.csv` is needed to run the app.
 
 ## AI Usage
-Anthropic Claude was used to generate code
+Vibe coded with Anthropic Claude
