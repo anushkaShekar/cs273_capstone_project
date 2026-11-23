@@ -1,13 +1,16 @@
+import json
+from pathlib import Path
+
 import pandas as pd
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition import TruncatedSVD
-from sklearn.cluster import KMeans
 
-from recommender import split_skills, recommender_one, recommender_two, recommender_three, missing_skills
+from models import build_models
+from recommender import recommender_one, recommender_two, recommender_three, missing_skills, add_job_skills
+
+METRICS_LOG = Path(__file__).parent / "metrics" / "metrics_log.jsonl"
 
 app = FastAPI()
 
@@ -21,35 +24,13 @@ app.add_middleware(
 # Load the data
 occupation_profiles = pd.read_csv("data/occupation_skill_profiles.csv")
 
-# Define a TF-IDF vectorizer that treats each skill as one unit
-tfidf_vectorizer = TfidfVectorizer(
-    tokenizer=split_skills,
-    lowercase=True,
-    token_pattern=None
-)
-
-# Learn the skills from the job profiles and convert each job into a row of numbers
-tfidf_matrix = tfidf_vectorizer.fit_transform(occupation_profiles["skill_profile"])
-
-# Get the list of skills (one per column)
-feature_names = tfidf_vectorizer.get_feature_names_out()
-
-# Model 1: bundle the fitted pieces
-model_one = {"vectorizer": tfidf_vectorizer, "tfidf_matrix": tfidf_matrix}
-
-# Model 2: shrink with SVD, group the jobs with k-means
-svd = TruncatedSVD(n_components=5, random_state=42)
-svd_matrix = svd.fit_transform(tfidf_matrix)
-kmeans = KMeans(n_clusters=3, random_state=42, n_init=10).fit(svd_matrix)
-
-model_two = {"vectorizer": tfidf_vectorizer, "svd": svd, "svd_matrix": svd_matrix, "kmeans": kmeans}
-
-# Model 3: embed each job's skills with a pre-trained sentence transformer
+# Fit the three models
 transformer = SentenceTransformer("all-MiniLM-L6-v2")
-job_texts = occupation_profiles["skill_profile"].str.lower().str.replace(" | ", ", ", regex=False)
-job_embeddings = transformer.encode(job_texts.tolist())
-
-model_three = {"model": transformer, "embeddings": job_embeddings, "feature_names": feature_names}
+models = build_models(occupation_profiles, transformer)
+model_one = models["one"]
+model_two = models["two"]
+model_three = models["three"]
+feature_names = models["feature_names"]
 
 # Define the expected request body for /recommend: a list of skill names and the model to use
 class SkillRequest(BaseModel):
@@ -74,7 +55,14 @@ async def give_recommendation(request: SkillRequest):
         return {"results": [], "skills_to_learn": [], "error": "Model not available yet."}
 
     return {
-        "results": results,
+        "results": add_job_skills(results, request.skills, occupation_profiles),
         "skills_to_learn": missing_skills(results, request.skills, occupation_profiles)
     }
 
+# /metrics (GET): returns every logged evaluation run, oldest first
+@app.get("/metrics")
+async def get_metrics():
+    if not METRICS_LOG.exists():
+        return {"runs": []}
+    with METRICS_LOG.open() as log:
+        return {"runs": [json.loads(line) for line in log if line.strip()]}

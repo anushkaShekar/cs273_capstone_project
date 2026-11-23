@@ -4,11 +4,13 @@ import SkillPicker from "./components/SkillPicker.jsx";
 import ModelPicker from "./components/ModelPicker.jsx";
 import JobResults from "./components/JobResults.jsx";
 import SkillsToLearn from "./components/SkillsToLearn.jsx";
+import Dashboard from "./components/Dashboard.jsx";
 
 // Address of the backend API
 const API_URL = "http://127.0.0.1:8000";
 
 export default function App() {
+  const [view, setView] = useState("recommender");        // which tab is showing
   const [allSkills, setAllSkills] = useState([]);         // every skill from the backend
   const [selected, setSelected] = useState([]);           // skills the user picked
   const [model, setModel] = useState("one");              // matching style the user picked
@@ -63,46 +65,77 @@ export default function App() {
   }
 
   return (
-    <main className="page">
-      <header className="intro-block">
-        <h1>What's next in your tech career?</h1>
-        <p className="intro">
-          Tell us your skills. We'll suggest jobs to aim for and skills to add.
-        </p>
-      </header>
-
-      {/* Inputs */}
-      <section className="inputs">
-        <SkillPicker
-          allSkills={allSkills}
-          selected={selected}
-          onAdd={addSkill}
-          onRemove={removeSkill}
-        />
-
-        <ModelPicker model={model} onChange={changeModel} />
-
+    <main className={view === "dashboard" ? "page wide" : "page"}>
+      <nav className="tabs" aria-label="Pages">
         <button
-          className="submit"
-          onClick={getRecommendations}
-          disabled={selected.length === 0 || loading}
+          className={view === "recommender" ? "tab active" : "tab"}
+          aria-current={view === "recommender" ? "page" : undefined}
+          onClick={() => setView("recommender")}
         >
-          {loading ? "Finding jobs..." : "Find jobs"}
+          Recommender
         </button>
+        <button
+          className={view === "dashboard" ? "tab active" : "tab"}
+          aria-current={view === "dashboard" ? "page" : undefined}
+          onClick={() => setView("dashboard")}
+        >
+          Model performance
+        </button>
+      </nav>
 
-        {error && <p className="error">{error}</p>}
-      </section>
+      {view === "dashboard" ? (
+        <>
+          <header className="intro-block">
+            <h1>Model performance</h1>
+            <p className="intro">
+              How well each model finds related jobs.
+            </p>
+          </header>
+          <Dashboard apiUrl={API_URL} />
+        </>
+      ) : (
+        <>
+          <header className="intro-block">
+            <h1>What's next in your tech career?</h1>
+            <p className="intro">
+              Tell us your skills. We'll suggest jobs to aim for and skills to add.
+            </p>
+          </header>
 
-      {/* Results */}
-      {results && results.length === 0 && (
-        <p className="empty">No matching jobs found. Try adding more skills.</p>
-      )}
+          {/* Inputs */}
+          <section className="inputs">
+            <SkillPicker
+              allSkills={allSkills}
+              selected={selected}
+              onAdd={addSkill}
+              onRemove={removeSkill}
+            />
 
-      {results && results.length > 0 && (
-        <div className="results-area">
-          <JobResults results={results} />
-          <SkillsToLearn skills={skillsToLearn} jobCount={results.length} />
-        </div>
+            <ModelPicker model={model} onChange={changeModel} />
+
+            <button
+              className="submit"
+              onClick={getRecommendations}
+              disabled={selected.length === 0 || loading}
+            >
+              {loading ? "Finding jobs..." : "Find jobs"}
+            </button>
+
+            {error && <p className="error">{error}</p>}
+          </section>
+
+          {/* Results */}
+          {results && results.length === 0 && (
+            <p className="empty">No matching jobs found. Try adding more skills.</p>
+          )}
+
+          {results && results.length > 0 && (
+            <div className="results-area">
+              <JobResults results={results} />
+              <SkillsToLearn skills={skillsToLearn} jobCount={results.length} />
+            </div>
+          )}
+        </>
       )}
     </main>
   );

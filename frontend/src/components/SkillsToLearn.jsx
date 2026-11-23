@@ -4,7 +4,8 @@ export default function SkillsToLearn({ skills, jobCount }) {
     <section className="section">
       <h2>Skills to learn</h2>
       <p className="note">
-        The more of these jobs that use a skill, the higher it is on the list.
+        Based on the jobs listed here. Skills common in these jobs but less
+        common elsewhere rank higher.
       </p>
 
       {skills.length === 0 ? (
