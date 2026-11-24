@@ -1,0 +1,428 @@
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #1c2430;
+  --muted: #5d6b7e;
+  --line: #d9dee6;
+  --accent: #1f4e8c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 48px 20px;
+}
+
+/* Title and inputs stay narrow; the results area below is wider */
+.intro-block,
+.inputs { max-width: 640px; }
+
+h1 { font-size: 1.75rem; margin: 0 0 8px; }
+.intro { color: var(--muted); margin: 0 0 28px; }
+
+/* Skill picker */
+.picker { position: relative; }
+
+.picker input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.picker input:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.options {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 4px 0 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.options li { padding: 8px 14px; cursor: pointer; }
+.options li:hover { background: var(--bg); }
+.options li.none { color: var(--muted); cursor: default; }
+
+/* Chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.chips.small { margin: 8px 0 0; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 0.875rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.chip button {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* Matching style */
+.models { border: none; padding: 0; margin: 20px 0 24px; }
+.models legend { font-weight: 600; padding: 0; margin-bottom: 8px; }
+
+.model-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.model {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* The radio circle is hidden; the whole card acts as the button */
+.model input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.model.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.model:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.model-name { font-weight: 600; }
+.model-desc { font-size: 0.875rem; color: var(--muted); }
+
+/* Submit button */
+.submit {
+  padding: 12px 22px;
+  font-size: 1rem;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.error { color: #a32626; margin-top: 16px; }
+.empty { color: var(--muted); margin: 0; }
+
+/* Results: jobs on the left, skills to learn on the right */
+.results-area {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 40px;
+  align-items: start;
+  margin-top: 48px;
+}
+
+@media (max-width: 760px) {
+  .results-area { grid-template-columns: 1fr; gap: 32px; }
+}
+
+.section h2 { font-size: 1.25rem; margin: 0 0 4px; }
+.note { color: var(--muted); margin: 0 0 8px; }
+
+.results { list-style: none; padding: 0; margin: 0; }
+
+.results li {
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+
+.job-title { font-weight: 600; }
+
+/* Skills to learn */
+.learn-list { list-style: none; padding: 0; margin: 0; }
+
+.learn-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.learn-skill { font-weight: 600; }
+.learn-count { color: var(--muted); font-size: 0.875rem; white-space: nowrap; }
+
+/* Expandable job skills */
+.expand,
+.show-all {
+  padding: 4px 0;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.expand {
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.job-skills {
+  margin-top: 6px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.job-skills-note {
+  margin: 0 0 10px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.results .job-skill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: none;
+}
+
+.job-skill-list.scroll {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.job-skill-list:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.results .job-skill {
+  padding: 2px 8px;
+  font-size: 0.8125rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.results .job-skill.has {
+  font-weight: 600;
+  border-color: var(--accent);
+}
+
+.show-all { margin-top: 8px; }
+
+/* Page tabs */
+.page.wide { max-width: 1080px; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  padding: 10px 14px;
+  margin-bottom: -1px;
+  font-size: 0.9375rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.tab.active {
+  color: var(--text);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+
+/* Dashboard */
+.dashboard {
+  --bar-color: #2a78d6;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.filters label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.filters select {
+  width: 100%;
+  padding: 9px 10px;
+  font: inherit;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.tile,
+.chart-card,
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+}
+
+.tile-label { color: var(--muted); font-size: 0.8125rem; }
+.tile-value { font-size: 1.625rem; font-weight: 600; line-height: 1.2; }
+.tile-value.small { font-size: 1.0625rem; line-height: 1.5; }
+
+.chart-card,
+.table-card { padding: 20px; }
+
+.chart-card h2,
+.table-card h2 { font-size: 1.125rem; margin: 0 0 4px; }
+
+.bars { display: grid; gap: 10px; margin-top: 16px; }
+
+.bar-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(112px, 210px) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+  border-radius: 3px;
+}
+
+.bar-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bar-label { font-size: 0.875rem; font-weight: 600; }
+
+/* The right padding leaves room for the value when a bar is near 100% */
+.bar-track {
+  position: relative;
+  display: block;
+  height: 14px;
+  margin-right: 56px;
+  border-left: 1px solid var(--line);
+}
+
+.bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--bar-color);
+  border-radius: 0 4px 4px 0;
+}
+
+.bar-value {
+  position: absolute;
+  top: 50%;
+  padding-left: 6px;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.bar-tip {
+  display: none;
+  position: absolute;
+  z-index: 5;
+  left: 64px;
+  bottom: calc(100% + 4px);
+  padding: 6px 9px;
+  font-size: 0.8125rem;
+  color: #fff;
+  background: var(--text);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.bar-row:hover .bar-tip,
+.bar-row:focus .bar-tip { display: block; }
+
+.table-wrap { overflow-x: auto; margin-top: 10px; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  padding: 8px 10px;
+  text-align: right;
+  border-top: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+th { color: var(--muted); font-weight: 600; border-top: none; }
+th:first-child,
+td:first-child { text-align: left; }
+
+.note.method { font-size: 0.8125rem; margin: 14px 0 0; }
