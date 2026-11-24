@@ -19,13 +19,15 @@ The user picks skills from a dropdown and chooses a matching style. The backend 
 │   └── data/
 │       └── occupation_skill_profiles.csv
 ├── scripts/
+│   ├── build_dataset.py   Builds the 716 occupation skill profiles from O*NET
+│   ├── evaluate.py        Evaluates the models and logs the metrics
 │   └── smoke_test.py      Quick check that the backend endpoints work
 └── data_preprocessing.ipynb   Cleans the raw data (runs in Google Colab)
 ```
 
 ## How it works
 
-1. **Preprocessing** (notebook): cleans the O*NET Software Skills data, keeps the target occupations, drops skills used by fewer than 2 occupations, and builds one skill profile per occupation. The output is `occupation_skill_profiles.csv`.
+1. **Preprocessing** (`scripts/build_dataset.py`): cleans the O*NET Software Skills data, keeps the 716 occupations with at least 10 skills, drops skills used by fewer than 2 occupations, and builds one skill profile per occupation. The output is `occupation_skill_profiles.csv`.
 2. **Backend:** loads the profiles when it starts and builds the models.
 3. **Frontend:** the user picks skills and a matching style, then clicks "Find jobs". The backend returns the closest jobs.
 

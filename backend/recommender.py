@@ -1,4 +1,5 @@
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import normalize
 from collections import Counter
 import math
 import numpy as np
@@ -65,9 +66,10 @@ def recommender_two(user_skills, model_two, occupation_profiles, top_n=5):
     if not matched:
         return []
 
-    # Create a TF-IDF embedding for the user's skills, then shrink it with SVD (transform only)
+    # Create a TF-IDF embedding for the user's skills, shrink it with SVD (transform only),
+    # and normalize it so a short skill list is not pulled toward the wrong cluster
     user_vector = tfidf_vectorizer.transform([" | ".join(matched)])
-    user_svd = svd.transform(user_vector)
+    user_svd = normalize(svd.transform(user_vector))
 
     # Find the user's cluster and the jobs that belong to it
     user_cluster = kmeans.predict(user_svd)[0]

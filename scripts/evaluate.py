@@ -6,7 +6,7 @@ related occupations. Skill suggestions are scored by how many belong to the
 hidden occupation. Every run appends one timestamped line to the metrics log.
 
 Run from the repo root:
-    python scripts/evaluate.py --skills software_skills.csv --related related_occupations.csv
+    python scripts/evaluate.py --related related_occupations.csv
 """
 import argparse
 import hashlib
@@ -22,19 +22,19 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
+from sklearn.cluster import KMeans
 from sklearn.preprocessing import normalize
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "backend"))
 
 import recommender as current  # noqa: E402
-from models import build_models  # noqa: E402
+from models import build_models, choose_clusters  # noqa: E402
 
 TOP_JOBS = 5
 TOP_SKILLS = 10
 QUERY_SIZE = 10
 SEEDS = [0, 1, 2]
-MIN_SKILLS = 10
 
 
 def git(*args):
@@ -46,18 +46,6 @@ def load_original(ref):
     module = types.ModuleType("original_recommender")
     exec(git("show", f"{ref}:backend/recommender.py"), module.__dict__)
     return module
-
-
-# Flatten the raw O*NET rows into one skill profile per occupation
-def build_profiles(raw, codes):
-    rows = raw[raw["O*NET-SOC Code"].isin(codes)]
-    counts = rows.groupby("skill")["O*NET-SOC Code"].nunique()
-    rows = rows[rows["skill"].isin(counts[counts >= 2].index)]
-    table = (rows.sort_values("skill")
-             .groupby(["O*NET-SOC Code", "Title"])["skill"]
-             .agg(" | ".join).reset_index())
-    table.columns = ["occupation_code", "occupation_title", "skill_profile"]
-    return table
 
 
 def score_jobs(titles, relevant):
@@ -83,6 +71,16 @@ def evaluate_scope(profiles, related, encoder, original):
     fit_seconds = time.perf_counter() - start
     labels = fitted["cluster_labels"]
 
+    # The original Model 2 clusters the SVD vectors without normalizing them
+    svd = fitted["two"]["svd"]
+    original_matrix = svd.transform(fitted["one"]["tfidf_matrix"])
+    original_k = choose_clusters(original_matrix)
+    original_two = {
+        **fitted["two"],
+        "svd_matrix": original_matrix,
+        "kmeans": KMeans(n_clusters=original_k, random_state=42, n_init=10).fit(original_matrix),
+    }
+
     # The original Model 3 embeds each job's skills as one long text
     joined = profiles["skill_profile"].str.lower().str.replace(" | ", ", ", regex=False).tolist()
     original_three = {
@@ -99,7 +97,7 @@ def evaluate_scope(profiles, related, encoder, original):
 
     variants = {
         ("one", "before"): (original.recommender_one, fitted["one"], original_gaps),
-        ("two", "before"): (original.recommender_two, fitted["two"], original_gaps),
+        ("two", "before"): (original.recommender_two, original_two, original_gaps),
         ("three", "before"): (original.recommender_three, original_three, original_gaps),
         ("one", "after"): (current.recommender_one, fitted["one"], current_gaps),
         ("two", "after"): (current.recommender_two, fitted["two"], current_gaps),
@@ -159,7 +157,6 @@ def evaluate_scope(profiles, related, encoder, original):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--skills", required=True, help="O*NET software_skills.csv")
     parser.add_argument("--related", required=True, help="O*NET related_occupations.csv")
     parser.add_argument("--onet-version", default="31.0")
     parser.add_argument("--baseline-ref", default="ccb6ae3", help="commit holding the original recommender")
@@ -168,18 +165,12 @@ def main():
     args = parser.parse_args()
 
     started = time.perf_counter()
-    raw = pd.read_csv(args.skills)
-    raw["skill"] = raw["Workplace Example"].str.lower().str.strip()
-    raw = raw.drop_duplicates(["O*NET-SOC Code", "skill"])
-
     rel = pd.read_csv(args.related)
     rel = rel[rel["Relatedness Tier"].str.startswith("Primary")]
     related = rel.groupby("O*NET-SOC Code")["Related O*NET-SOC Code"].apply(set).to_dict()
 
     shipped = pd.read_csv(ROOT / "backend" / "data" / "occupation_skill_profiles.csv")
-    sizes = raw.groupby("O*NET-SOC Code")["skill"].nunique()
-    broad_codes = sizes[sizes >= MIN_SKILLS].index
-    scopes = {"current_12": shipped, "expanded_min10": build_profiles(raw, broad_codes)}
+    scopes = {"expanded_min10": shipped}
 
     encoder = SentenceTransformer("all-MiniLM-L6-v2")
     original = load_original(args.baseline_ref)

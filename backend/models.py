@@ -7,7 +7,7 @@ from sklearn.preprocessing import normalize
 
 from recommender import embed_skills, split_skills
 
-# Candidate cluster counts when the dataset is larger than the original 12 jobs
+# Candidate cluster counts
 CLUSTER_OPTIONS = [10, 15, 20, 30, 40]
 
 
@@ -40,11 +40,11 @@ def build_models(occupation_profiles, transformer):
     model_one = {"vectorizer": tfidf_vectorizer, "tfidf_matrix": tfidf_matrix}
 
     # Model 2: shrink with SVD, group the jobs with k-means
-    job_count = len(occupation_profiles)
-    n_components = 5 if job_count <= 12 else min(100, job_count - 1, tfidf_matrix.shape[1] - 1)
+    n_components = min(100, len(occupation_profiles) - 1, tfidf_matrix.shape[1] - 1)
     svd = TruncatedSVD(n_components=n_components, random_state=42)
-    svd_matrix = svd.fit_transform(tfidf_matrix)
-    n_clusters = 3 if job_count <= 12 else choose_clusters(svd_matrix)
+    # Normalize so k-means groups jobs by direction, matching the cosine similarity ranking
+    svd_matrix = normalize(svd.fit_transform(tfidf_matrix))
+    n_clusters = choose_clusters(svd_matrix)
     kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10).fit(svd_matrix)
 
     model_two = {"vectorizer": tfidf_vectorizer, "svd": svd, "svd_matrix": svd_matrix, "kmeans": kmeans}

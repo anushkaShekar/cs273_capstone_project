@@ -12,8 +12,6 @@ const METRICS = [
   { id: "ndcg5", name: "nDCG", help: "Like precision, but related jobs ranked higher count for more." },
 ];
 
-const SCOPES = { current_12: "Current dataset", expanded_min10: "Expanded dataset" };
-
 const percent = (value) => `${(value * 100).toFixed(1)}%`;
 const when = (timestamp) => new Date(timestamp).toLocaleString();
 
@@ -39,7 +37,6 @@ export default function Dashboard({ apiUrl }) {
   const [runs, setRuns] = useState(null);
   const [error, setError] = useState("");
   const [runIndex, setRunIndex] = useState(0);
-  const [scopeId, setScopeId] = useState("current_12");
   const [metricId, setMetricId] = useState("p5");
 
   useEffect(() => {
@@ -62,7 +59,7 @@ export default function Dashboard({ apiUrl }) {
   }
 
   const run = runs[runIndex];
-  const scope = run.scopes[scopeId] || Object.values(run.scopes)[0];
+  const scope = run.scopes.expanded_min10;
   const metric = METRICS.find((m) => m.id === metricId);
   const rows = MODELS.map((model) => ({ ...model, values: find(scope, model.id) }));
   const best = [...rows].sort((a, b) => b.values.p5 - a.values.p5)[0];
@@ -75,16 +72,6 @@ export default function Dashboard({ apiUrl }) {
           <select value={runIndex} onChange={(e) => setRunIndex(Number(e.target.value))}>
             {runs.map((r, i) => (
               <option key={r.timestamp_utc} value={i}>{when(r.timestamp_utc)}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Dataset
-          <select value={scopeId} onChange={(e) => setScopeId(e.target.value)}>
-            {Object.keys(run.scopes).map((id) => (
-              <option key={id} value={id}>
-                {SCOPES[id] || id} ({run.scopes[id].occupations} jobs)
-              </option>
             ))}
           </select>
         </label>
@@ -160,7 +147,7 @@ export default function Dashboard({ apiUrl }) {
         <p className="note method">
           O*NET {run.config.onet_version}. Each simulated user has {run.config.query_skills} skills
           from one occupation, which is hidden from the results. Metrics use the top {run.config.top_jobs} recommended
-          jobs. {scope.clusters} clusters, {scope.skills.toLocaleString()} skills. Commit {run.git.commit}
+          jobs. {scope.occupations} occupations, {scope.clusters} clusters, {scope.skills.toLocaleString()} skills. Commit {run.git.commit}
           {run.git.uncommitted_changes ? " with uncommitted changes" : ""}.
         </p>
       </div>
