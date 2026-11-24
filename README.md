@@ -106,4 +106,4 @@ The data comes from the [O*NET](https://www.onetcenter.org/) Software Skills fil
 
 
 ## AI Usage
-Vibe coded with Anthropic Claude
+ Anthropic Claude was used to generate the code.
