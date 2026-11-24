@@ -27,7 +27,7 @@ The user picks skills from a dropdown and chooses a matching style. The backend 
 
 ## How it works
 
-1. **Preprocessing** (`scripts/build_dataset.py`): cleans the O*NET Software Skills data, keeps the 716 occupations with at least 10 skills, drops skills used by fewer than 2 occupations, and builds one skill profile per occupation. The output is `occupation_skill_profiles.csv`.
+1. **Preprocessing** (`scripts/build_dataset.py`): cleans the O*NET Software Skills data, keeps occupations with at least 10 skills, drops skills used by fewer than 2 occupations, and builds one skill profile for each of the 716 remaining occupations. The output is `occupation_skill_profiles.csv`.
 2. **Backend:** loads the profiles when it starts and builds the models.
 3. **Frontend:** the user picks skills and a matching style, then clicks "Find jobs". The backend returns the closest jobs.
 
